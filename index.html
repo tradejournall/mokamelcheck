@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>برنامه مکمل های قوی پنجه</title>
+  <title>برنامه مصرف مکمل‌ها - قوی پنجه</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
   <style>
     body {
       font-family: sans-serif;
@@ -11,11 +12,11 @@
       margin: 0;
       padding: 20px;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
       color: #2c3e50;
     }
-    table, .history-table {
+    table {
       width: 100%;
       border-collapse: collapse;
       background: white;
@@ -50,197 +51,338 @@
     button:hover {
       background-color: #219150;
     }
-    #historySection {
-      margin-top: 40px;
+    .dark-mode {
+      background-color: #121212;
+      color: white;
     }
-    .form-section {
-      background: white;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-top: 30px;
+    .dark-mode table {
+      background: #1e1e1e;
+      color: white;
+    }
+    .dark-mode th {
+      background: #222;
     }
     input, select {
       padding: 8px;
       width: 100%;
       margin-bottom: 10px;
     }
-    .dark-mode {
-      background-color: #121212;
-      color: white;
+    .form-section, .chart-container {
+      background: white;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 30px;
     }
-    .dark-mode table, .dark-mode .form-section {
-      background-color: #1e1e1e;
-      color: white;
-    }
-    .dark-mode th {
-      background: #222;
-    }
-    .navigation {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 0.8em;
+        padding: 8px;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>برنامه مصرف مکمل‌ها</h1>
-<h2> قوی پنجه</h2>
+
+<h1>برنامه مصرف مکمل‌ها</h1>
+<h2>قوی پنجه</h2>
+
+<!-- تنظیمات -->
+<div style="text-align:center;">
   <button onclick="toggleDarkMode()">تغییر حالت تاریک/روشن</button>
+  <input type="date" id="datePicker" onchange="selectDate()">
+</div>
 
-  <div class="navigation">
-    <button onclick="changeDay(-1)">روز قبل</button>
-    <div id="currentDayDisplay"></div>
-    <button onclick="changeDay(1)">روز بعد</button>
-  </div>
+<!-- جستجو و ناوبری -->
+<div class="navigation" style="display:flex; justify-content:space-between; margin-top:20px;">
+  <button onclick="changeDay(-1)">روز قبل</button>
+  <div id="currentDayDisplay"></div>
+  <button onclick="changeDay(1)">روز بعد</button>
+</div>
+<input type="text" id="searchInput" placeholder="جستجو در مکمل‌ها..." onkeyup="filterSupplements()">
 
-  <table id="supplementTable">
+<!-- جدول مکمل‌ها -->
+<table id="supplementTable">
+  <thead>
+    <tr>
+      <th>زمان</th>
+      <th>مکمل</th>
+      <th>توضیحات</th>
+      <th>وضعیت</th>
+      <th>ویرایش</th>
+    </tr>
+  </thead>
+  <tbody id="supplementBody"></tbody>
+</table>
+
+<!-- نمودار -->
+<div class="chart-container">
+  <canvas id="progressChart" width="400" height="150"></canvas>
+</div>
+
+<!-- تاریخچه -->
+<div id="historySection">
+  <h2>تاریخچه مصرف</h2>
+  <table>
     <thead>
-      <tr>
-        <th>زمان</th>
-        <th>مکمل</th>
-        <th>توضیحات</th>
-        <th>وضعیت</th>
-        <th>ویرایش</th>
-      </tr>
+      <tr><th colspan="5">ثبت موارد مصرف شده</th></tr>
     </thead>
-    <tbody id="supplementBody">
-    </tbody>
+    <tbody id="historyBody"></tbody>
   </table>
+</div>
 
-  <div id="historySection">
-    <h2>تاریخچه مصرف</h2>
-    <table class="history-table">
-      <thead>
-        <tr>
-          <th>مکمل</th>
-          <th>زمان</th>
-          <th>تاریخ</th>
-          <th>ساعت</th>
-          <th>عملیات</th>
-        </tr>
-      </thead>
-      <tbody id="historyBody">
-      </tbody>
-    </table>
-  </div>
+<!-- فرم افزودن مکمل -->
+<div class="form-section">
+  <h2>افزودن مکمل جدید</h2>
+  <input type="text" id="nameInput" placeholder="نام مکمل">
+  <input type="text" id="timeInput" placeholder="زمان مصرف (مثلاً صبح ۹)">
+  <input type="text" id="noteInput" placeholder="نکات مصرف">
+  <label><input type="checkbox" id="dailyRepeat"> هر روز تکرار شود؟</label>
+  <button onclick="addSupplement()">افزودن به جدول</button>
+  <button onclick="exportToCSV()">خروجی CSV</button>
+  <button onclick="window.print()">چاپ جدول</button>
+</div>
 
-  <div class="form-section">
-    <h2>افزودن مکمل جدید</h2>
-    <input type="text" id="nameInput" placeholder="نام مکمل">
-    <input type="text" id="timeInput" placeholder="زمان مصرف (مثلاً صبح ۹)">
-    <input type="text" id="noteInput" placeholder="نکات مصرف">
-    <button onclick="addSupplement()">افزودن به جدول</button>
-  </div>
+<!-- فرم BMI و پیشنهاد -->
+<div class="form-section">
+  <h2>ثبت اطلاعات شخصی</h2>
+  <input type="number" id="heightInput" placeholder="قد (cm)">
+  <input type="number" id="weightInput" placeholder="وزن (kg)">
+  <button onclick="calculateBMI()">محاسبه BMI</button>
+  <p id="bmiResult"></p>
+  <button onclick="suggestSupplement()">پیشنهاد مکمل</button>
+  <p id="supplementSuggestion"></p>
+</div>
 
-  <script>
-    let supplementPages = [[]];
-    let currentDay = 0;
+<script>
+  let supplementPages = [[]];
+  let currentDay = 0;
+  let chart;
 
-    function renderDayLabel() {
-      document.getElementById('currentDayDisplay').innerText = `روز ${currentDay + 1}`;
-    }
+  function escapeForHTML(str) {
+    return encodeURIComponent(str).replace(/'/g, "%27");
+  }
 
-    function loadTable() {
-      const tbody = document.getElementById('supplementBody');
-      tbody.innerHTML = '';
-      supplementPages[currentDay].forEach((supp, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${supp.time}</td>
-          <td>${supp.name}</td>
-          <td class="note">${supp.note}</td>
-          <td><button onclick="markTaken('${supp.name}', '${supp.time}')">خوردم</button></td>
-          <td>
-            <button onclick="editSupplement(${index})">✏️</button>
-            <button onclick="deleteSupplement(${index})">🗑</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      renderDayLabel();
-    }
+  function decodeHTMLEntities(str) {
+    const txt = document.createElement('textarea');
+    txt.innerHTML = str;
+    return txt.value;
+  }
 
-    function markTaken(name, time) {
-      const now = new Date();
-      const date = now.toLocaleDateString('fa-IR');
-      const hour = now.toLocaleTimeString('fa-IR');
-      const historyBody = document.getElementById('historyBody');
+  function renderDayLabel() {
+    document.getElementById('currentDayDisplay').innerText = `روز ${currentDay + 1}`;
+  }
+
+  function loadTable() {
+    const tbody = document.getElementById('supplementBody');
+    tbody.innerHTML = '';
+    supplementPages[currentDay].forEach((supp, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${name}</td>
-        <td>${time}</td>
-        <td>${date}</td>
-        <td>${hour}</td>
-        <td><button onclick="this.closest('tr').remove()">حذف</button></td>
+        <td>${supp.time}</td>
+        <td>${supp.name}</td>
+        <td class="note">${supp.note}</td>
+        <td><button onclick="markTaken('${escapeForHTML(supp.name)}', '${escapeForHTML(supp.time)}')">خوردم</button></td>
+        <td>
+          <button onclick="editSupplement(${index})">✏️</button>
+          <button onclick="deleteSupplement(${index})">🗑</button>
+        </td>
       `;
-      historyBody.appendChild(tr);
-      checkDayCompletion();
-    }
+      tbody.appendChild(tr);
+    });
+    renderDayLabel();
+    updateChart();
+    saveData();
+  }
 
-    function addSupplement() {
-      const name = document.getElementById('nameInput').value;
-      const time = document.getElementById('timeInput').value;
-      const note = document.getElementById('noteInput').value;
-      if (name && time) {
-        supplementPages[currentDay].push({ name, time, note });
-        loadTable();
-        document.getElementById('nameInput').value = '';
-        document.getElementById('timeInput').value = '';
-        document.getElementById('noteInput').value = '';
+  window.markTaken = function(encodedName, encodedTime) {
+    const name = decodeURIComponent(encodedName);
+    const time = decodeURIComponent(encodedTime);
+
+    const now = new Date();
+    const date = now.toLocaleDateString('fa-IR');
+    const hour = now.toLocaleTimeString('fa-IR');
+
+    const historyRow = document.createElement('tr');
+    historyRow.innerHTML = `<td colspan="5">${name} در ${time} — ${date} ساعت ${hour}</td>`;
+    document.getElementById('historyBody').appendChild(historyRow);
+
+    const rows = document.querySelectorAll('#supplementBody tr');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells[0] && cells[1] && cells[0].textContent === time && cells[1].textContent === name) {
+        row.classList.add('taken');
       }
-    }
+    });
 
-    function editSupplement(index) {
-      const supp = supplementPages[currentDay][index];
-      document.getElementById('nameInput').value = supp.name;
-      document.getElementById('timeInput').value = supp.time;
-      document.getElementById('noteInput').value = supp.note;
-      deleteSupplement(index);
-    }
+    checkDayCompletion();
+    playSound();
+    saveData();
+  }
 
-    function deleteSupplement(index) {
-      supplementPages[currentDay].splice(index, 1);
+  function calculateBMI() {
+    const height = parseFloat(document.getElementById('heightInput').value) / 100;
+    const weight = parseFloat(document.getElementById('weightInput').value);
+    if (!isNaN(height) && !isNaN(weight)) {
+      const bmi = (weight / (height * height)).toFixed(1);
+      document.getElementById('bmiResult').innerText = `شاخص توده بدنی (BMI): ${bmi}`;
+    }
+  }
+
+  function suggestSupplement() {
+    const height = parseFloat(document.getElementById('heightInput').value) / 100;
+    const weight = parseFloat(document.getElementById('weightInput').value);
+    if (!isNaN(height) && !isNaN(weight)) {
+      const bmi = weight / (height * height);
+      let suggestion = "";
+      if (bmi < 18.5) suggestion = "ویتامین D، کلسیم، امگا-۳";
+      else if (bmi >= 25) suggestion = "فیبر، کروم، ویتامین B";
+      else suggestion = "ویتامین C، منیزیم، آنتی اکسیدان";
+      document.getElementById('supplementSuggestion').innerText = `پیشنهاد مکمل: ${suggestion}`;
+    }
+  }
+
+  function addSupplement() {
+    const name = document.getElementById('nameInput').value.trim();
+    const time = document.getElementById('timeInput').value.trim();
+    const note = document.getElementById('noteInput').value.trim();
+    const dailyRepeat = document.getElementById('dailyRepeat').checked;
+    if (name && time) {
+      supplementPages[currentDay].push({ name, time, note, dailyRepeat });
+      loadTable();
+      document.getElementById('nameInput').value = '';
+      document.getElementById('timeInput').value = '';
+      document.getElementById('noteInput').value = '';
+      document.getElementById('dailyRepeat').checked = false;
+    }
+  }
+
+  function editSupplement(index) {
+    const supp = supplementPages[currentDay][index];
+    document.getElementById('nameInput').value = supp.name;
+    document.getElementById('timeInput').value = supp.time;
+    document.getElementById('noteInput').value = supp.note;
+    document.getElementById('dailyRepeat').checked = !!supp.dailyRepeat;
+    deleteSupplement(index);
+  }
+
+  function deleteSupplement(index) {
+    supplementPages[currentDay].splice(index, 1);
+    loadTable();
+  }
+
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+  }
+
+  function changeDay(offset) {
+    currentDay += offset;
+    if (currentDay < 0) currentDay = 0;
+    if (!supplementPages[currentDay]) supplementPages[currentDay] = [];
+    loadTable();
+  }
+
+  function filterSupplements() {
+    const term = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#supplementBody tr');
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(term) ? '' : 'none';
+    });
+  }
+
+  function exportToCSV() {
+    let csv = 'زمان,مکمل,توضیحات\n';
+    supplementPages[currentDay].forEach(supp => {
+      csv += `"${supp.time}","${supp.name}","${supp.note}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mokamel_" + (currentDay + 1) + ".csv";
+    a.click();
+  }
+
+  function checkDayCompletion() {
+    const takenCount = document.querySelectorAll('.taken').length;
+    if (takenCount >= supplementPages[currentDay].length && supplementPages[currentDay].length > 0) {
+      alert('همه مکمل‌های امروز مصرف شدند!');
+      if (!supplementPages[currentDay + 1]) supplementPages[currentDay + 1] = [];
+      currentDay++;
       loadTable();
     }
+  }
 
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-    }
+  function updateChart() {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const total = supplementPages[currentDay].length;
+    const taken = document.querySelectorAll('.taken').length;
+    const percent = Math.round((taken / total) * 100);
 
-    function changeDay(offset) {
-      currentDay += offset;
-      if (currentDay < 0) currentDay = 0;
-      if (!supplementPages[currentDay]) supplementPages[currentDay] = [];
-      loadTable();
-    }
+    if (chart) chart.destroy();
 
-    function checkDayCompletion() {
-      const rows = document.querySelectorAll('#supplementBody tr');
-      if (rows.length === 0) return;
-      let allTaken = true;
-      rows.forEach(row => {
-        if (!row.classList.contains('taken')) {
-          allTaken = false;
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['درصد مصرف'],
+        datasets: [{
+          label: 'درصد مصرف',
+          data: [percent],
+          backgroundColor: '#3498db'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true, max: 100 }
         }
-      });
-      if (document.querySelectorAll('#historyBody tr').length >= supplementPages[currentDay].length) {
-        if (!supplementPages[currentDay + 1]) {
-          supplementPages.push([]);
-        }
-        currentDay++;
-        loadTable();
       }
-      }
+    });
+  }
 
-    // مقداردهی اولیه
+  function loadData() {
+    const saved = localStorage.getItem('supplementPages');
+    const day = localStorage.getItem('currentDay');
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (saved) supplementPages = JSON.parse(saved);
+    if (day !== null) currentDay = parseInt(day);
+    if (darkMode) document.body.classList.add('dark-mode');
+  }
+
+  function saveData() {
+    localStorage.setItem('supplementPages', JSON.stringify(supplementPages));
+    localStorage.setItem('currentDay', currentDay);
+  }
+
+  function selectDate() {
+    const selected = new Date(document.getElementById('datePicker').value);
+    const today = new Date();
+    const diffDays = Math.floor((selected - today) / (1000 * 60 * 60 * 24));
+    currentDay = diffDays;
+    if (!supplementPages[currentDay]) supplementPages[currentDay] = [];
+    loadTable();
+  }
+
+  function playSound() {
+    const audio = new Audio('https://www.soundjay.com/buttons/sounds/beep-07.mp3'); 
+    audio.play();
+  }
+
+  // Load Data
+  loadData();
+
+  if (!supplementPages[0] || supplementPages[0].length === 0) {
     supplementPages[0] = [
       { time: "صبح (۹)", name: "کلسیم جوشان", note: "با آب، بدون چای یا قهوه" },
       { time: "ظهر (۱۳)", name: "امگا ۳", note: "همراه غذای چرب" },
       { time: "شب (۲۲)", name: "مگنیفورت", note: "قبل خواب، با آب یا شیر" },
       { time: "جمعه ظهر", name: "ویتامین D3 (۵۰,۰۰۰)", note: "هفته‌ای ۱ بار، با ناهار چرب" }
     ];
+  }
 
-    loadTable();
-  </script>
+  loadTable();
+</script>
+
 </body>
 </html>
