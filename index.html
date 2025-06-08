@@ -5,81 +5,333 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>برنامه مصرف مکمل‌ها - قوی پنجه</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-    }
+  /* --- تنظیمات عمومی --- */
+  body {
+    font-family: 'Vazir', sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  h1, h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 10px;
+  }
+
+  p {
+    text-align: center;
+    font-size: 0.9em;
+    color: #777;
+  }
+
+  /* --- جدول مکمل‌ها --- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  th, td {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  th {
+    background-color: #3498db;
+    color: white;
+    font-weight: bold;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  .note {
+    font-size: 0.85em;
+    color: #888;
+  }
+
+  /* --- دکمه‌ها --- */
+  button {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #219150;
+  }
+
+  .navigation button {
+    background-color: #34495e;
+  }
+
+  .navigation button:hover {
+    background-color: #2c3e50;
+  }
+
+  /* --- فرم‌ها و بخش‌ها --- */
+  .form-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    margin-top: 30px;
+  }
+
+  input, select, textarea {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 1em;
+    width: 100%;
+    margin-bottom: 12px;
+    transition: border-color 0.3s;
+  }
+
+  input:focus, select:focus {
+    border-color: #3498db;
+    outline: none;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+
+  .taken {
+    background-color: #d1f7c4 !important;
+    font-weight: bold;
+  }
+
+  /* --- حالت تاریک --- */
+  .dark-mode {
+    background-color: #121212;
+    color: #f1f1f1;
+  }
+
+  .dark-mode table {
+    background-color: #1e1e1e;
+    color: #f1f1f1;
+  }
+
+  .dark-mode th {
+    background-color: #222 !important;
+  }
+
+  .dark-mode input,
+  .dark-mode select,
+  .dark-mode textarea {
+    background-color: #2a2a2a;
+    color: #f1f1f1;
+    border-color: #555;
+  }
+
+  .dark-mode .form-section {
+    background-color: #1e1e1e;
+  }
+
+  /* --- موبایل فرندلی --- */
+  @media (max-width: 768px) {
     h1, h2 {
-      text-align: center;
-      color: #2c3e50;
+      font-size: 1.2em;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+    table, thead, tbody, th, td, tr {
+      display: block;
     }
-    th, td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      text-align: center;
+    thead {
+      display: none;
     }
-    th {
-      background: #3498db;
-      color: white;
+    tr {
+      margin-bottom: 15px;
     }
-    .note {
-      font-size: 0.9em;
-      color: #555;
-    }
-    .taken {
-      background-color: #d1f7c4 !important;
-    }
-    button {
-      padding: 6px 12px;
-      background-color: #27ae60;
-      color: white;
+    td {
+      text-align: right;
+      position: relative;
+      padding-left: 50%;
       border: none;
-      cursor: pointer;
-      border-radius: 4px;
-      margin: 2px;
+      border-bottom: 1px solid #ddd;
     }
-    button:hover {
-      background-color: #219150;
+    td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 10px;
+      font-weight: bold;
+      color: #aaa;
     }
-    .dark-mode {
-      background-color: #121212;
-      color: white;
+  }
+
+  /* --- دکمه‌های بالا و پایین صفحه --- */
+  .navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  #currentDayDisplay {
+    font-weight: bold;
+    font-size: 1.1em;
+    padding: 8px 16px;
+    background: #ecf0f1;
+    border-radius: 6px;
+  }
+
+  .chart-container {
+    margin-top: 30px;
+  }
+
+  canvas {
+    max-width: 100%;
+  }
+
+  /* --- لودینگ اولیه --- */
+  .loading {
+    text-align: center;
+    padding: 50px;
+    color: #aaa;
+  }
+
+  /* --- عنوان‌ها --- */
+  .section-title {
+    font-size: 1.1em;
+    color: #333;
+    margin: 15px 0 10px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+  }
+
+  .dark-mode .section-title {
+    color: #ccc;
+    border-color: #444;
+  }
+
+  /* --- نمودار --- */
+  .chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+
+  .dark-mode .chart-container {
+    background: #1e1e1e;
+  }
+
+  /* --- افزودن مکمل --- */
+  .add-supplement-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    margin-top: 20px;
+    align-items: end;
+  }
+
+  @media (max-width: 768px) {
+    .add-supplement-form {
+      display: block;
     }
-    .dark-mode table {
-      background: #1e1e1e;
-      color: white;
-    }
-    .dark-mode th {
-      background: #222;
-    }
-    input, select {
-      padding: 8px;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .form-section, .chart-container {
-      background: white;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-top: 30px;
-    }
-    @media (max-width: 600px) {
-      th, td {
-        font-size: 0.8em;
-        padding: 8px;
-      }
-    }
-  </style>
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* --- انتخاب تاریخ --- */
+  .date-picker {
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .date-picker input[type="date"] {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+  }
+
+  /* --- دکمه تغییر حالت --- */
+  .theme-toggle {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #7f8c8d;
+    border-radius: 6px;
+    font-size: 0.9em;
+    cursor: pointer;
+  }
+
+  .theme-toggle:hover {
+    background-color: #666;
+  }
+
+  /* --- نمودار --- */
+  .chart-container {
+    margin-top: 30px;
+  }
+
+  /* --- تاریخچه --- */
+  #historyBody tr td {
+    padding: 10px;
+  }
+
+  .history-section h2 {
+    margin-top: 30px;
+    text-align: center;
+  }
+
+  .history-section table {
+    margin-top: 10px;
+  }
+
+  .history-section td[colspan="5"] {
+    background: #ecf0f1;
+    font-style: italic;
+    color: #666;
+  }
+
+  .dark-mode .history-section td[colspan="5"] {
+    background: #2a2a2a;
+    color: #aaa;
+  }
+
+  /* --- فوتر --- */
+  footer {
+    text-align: center;
+    margin-top: 50px;
+    font-size: 0.8em;
+    color: #aaa;
+  }
+
+  /* --- فونت سفارشی (اختیاری) --- */
+  @import url('https://cdn.fontcdn.ir/Font?Name=Vazir');
+
+  * {
+    box-sizing: border-box;
+  }
+</style>
 </head>
 
 
@@ -91,7 +343,7 @@
 
 <!-- تنظیمات -->
 <div style="text-align:center;">
-  <button onclick="toggleDarkMode()">تغییر حالت تاریک/روشن</button>
+  <button onclick="toggleDarkMode()">تم تاریک/روشن</button>
   <input type="date" id="datePicker" onchange="selectDate()">
 </div>
 
@@ -135,7 +387,10 @@
     <label><input type="checkbox" id="repeatToggle"> ریپیت</label>
   </div>
 </div>
-
+<!-- Footer -->
+<footer>
+  &copy; 2025 - قوی پنجه | تمامی حقوق محفوظ است.
+</footer>
 <script>
   const audioInput = document.getElementById('audioFileInput');
   const audioPlayer = document.getElementById('localAudioPlayer');
@@ -189,13 +444,6 @@
   });
 </script>
 
-<!-- جستجو و ناوبری -->
-<div class="navigation" style="display:flex; justify-content:space-between; margin-top:20px;">
-  <button onclick="changeDay(-1)">روز قبل</button>
-  <div id="currentDayDisplay"></div>
-  <button onclick="changeDay(1)">روز بعد</button>
-</div>
-<input type="text" id="searchInput" placeholder="جستجو در مکمل‌ها..." onkeyup="filterSupplements()">
 
 <!-- جدول مکمل‌ها -->
 <table id="supplementTable">
