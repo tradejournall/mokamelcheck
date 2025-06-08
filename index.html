@@ -81,7 +81,10 @@
     }
   </style>
 </head>
+
+
 <body>
+  
 
 <h1>برنامه مصرف مکمل‌ها</h1>
 <h2>قوی پنجه</h2>
@@ -91,6 +94,100 @@
   <button onclick="toggleDarkMode()">تغییر حالت تاریک/روشن</button>
   <input type="date" id="datePicker" onchange="selectDate()">
 </div>
+
+<div style="text-align:center; margin: 20px;">
+  <h3>ساعت فعلی:</h3>
+  <p id="clock" style="font-size: 1.5em; font-weight: bold;"></p>
+</div>
+
+<script>
+  function updateClock() {
+    const now = new Date();
+    const options = { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit',
+      timeZone: 'Asia/Tehran',
+      localeMatcher: 'best fit'
+    };
+    const formatter = new Intl.DateTimeFormat('fa-IR', options);
+    const parts = Object.fromEntries(
+      formatter.formatToParts(now).map(part => [part.type, part.value])
+    );
+    const timeString = `${parts.hour}:${parts.minute}:${parts.second}`;
+    document.getElementById('clock').textContent = timeString;
+  }
+
+  setInterval(updateClock, 1000);
+  updateClock(); // اولین بار فوراً نمایش دهد
+</script>
+
+<!-- موزیک پلیر -->
+<div class="form-section">
+  <h2>موزیک پلیر</h2>
+  <input type="file" id="audioFileInput" accept="audio/*" multiple>
+  <div style="margin-top: 10px;">
+    <audio id="localAudioPlayer" controls style="width: 100%;"></audio>
+  </div>
+  <div style="display:flex; justify-content:space-between; margin-top:10px;">
+    <button onclick="prevTrack()">قبلی</button>
+    <button onclick="nextTrack()">نکست</button>
+    <label><input type="checkbox" id="repeatToggle"> ریپیت</label>
+  </div>
+</div>
+
+<script>
+  const audioInput = document.getElementById('audioFileInput');
+  const audioPlayer = document.getElementById('localAudioPlayer');
+  const repeatToggle = document.getElementById('repeatToggle');
+
+  let audioFiles = [];
+  let currentTrackIndex = 0;
+
+  // انتخاب فایل(ها)
+  audioInput.addEventListener('change', function () {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+
+    audioFiles = files.map(file => ({
+      name: file.name,
+      url: URL.createObjectURL(file)
+    }));
+
+    currentTrackIndex = 0;
+    playCurrentTrack();
+  });
+
+  // پخش آهنگ فعلی
+  function playCurrentTrack() {
+    if (!audioFiles.length) return;
+    audioPlayer.src = audioFiles[currentTrackIndex].url;
+    audioPlayer.play();
+  }
+
+  // قبلی
+  function prevTrack() {
+    if (!audioFiles.length) return;
+    currentTrackIndex = (currentTrackIndex - 1 + audioFiles.length) % audioFiles.length;
+    playCurrentTrack();
+  }
+
+  // نکست
+  function nextTrack() {
+    if (!audioFiles.length) return;
+    currentTrackIndex = (currentTrackIndex + 1) % audioFiles.length;
+    playCurrentTrack();
+  }
+
+  // ریپیت
+  audioPlayer.addEventListener('ended', () => {
+    if (repeatToggle.checked) {
+      playCurrentTrack(); // تکرار
+    } else {
+      nextTrack(); // نکست
+    }
+  });
+</script>
 
 <!-- جستجو و ناوبری -->
 <div class="navigation" style="display:flex; justify-content:space-between; margin-top:20px;">
@@ -374,10 +471,10 @@
 
   if (!supplementPages[0] || supplementPages[0].length === 0) {
     supplementPages[0] = [
-      { time: "صبح", name: "کلسیم جوشان", note: "با آب، بدون چای یا قهوه" },
-      { time: "ظهر", name: "امگا ۳", note: "همراه غذای چرب" },
-      { time: "شب", name: "مگنیفورت", note: "قبل خواب، با آب یا شیر" },
-      { time: "یکشنبه ظهر", name: "ویتامین D3 (۵۰,۰۰۰)", note: "هفته‌ای ۱ بار، با ناهار چرب" }
+      { time: "صبح (۹)", name: "کلسیم جوشان", note: "با آب، بدون چای یا قهوه" },
+      { time: "ظهر (۱۳)", name: "امگا ۳", note: "همراه غذای چرب" },
+      { time: "شب (۲۲)", name: "مگنیفورت", note: "قبل خواب، با آب یا شیر" },
+      { time: "جمعه ظهر", name: "ویتامین D3 (۵۰,۰۰۰)", note: "هفته‌ای ۱ بار، با ناهار چرب" }
     ];
   }
 
